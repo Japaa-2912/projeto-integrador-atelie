@@ -1,0 +1,13 @@
+# Banco de dados gerado em tempo de execução
+dados/
+relatorios/
+
+# Artefatos de build do PyInstaller
+build/
+dist/
+*.spec
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/

@@ -1,0 +1,5 @@
+# O programa usa apenas a biblioteca padrão do Python.
+# Nenhuma dependência externa é necessária para executar main.py.
+#
+# Para gerar o executável (.exe), instale opcionalmente:
+# pyinstaller>=6.0
