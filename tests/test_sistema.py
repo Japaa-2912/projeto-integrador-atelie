@@ -1,12 +1,3 @@
-"""Testes automatizados das regras de negócio.
-
-Execução:
-
-    py -m unittest discover -s tests -t . -v
-"""
-
-from __future__ import annotations
-
 import sqlite3
 import unittest
 
@@ -15,7 +6,6 @@ from app.utilidades import converter_dinheiro, formatar_moeda, normalizar_busca
 
 
 def criar_servico() -> ServicoLoja:
-    """Cria um banco em memória, isolado para cada teste."""
     conexao = sqlite3.connect(":memory:")
     conexao.row_factory = sqlite3.Row
     conexao.execute("PRAGMA foreign_keys = ON")

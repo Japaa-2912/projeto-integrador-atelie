@@ -1,11 +1,4 @@
-"""Interface de linha de comando do sistema.
-
-Toda a interação com o usuário acontece aqui. As regras de negócio ficam na
-camada de serviços, o que permite trocar esta interface (por uma tela gráfica,
-por exemplo) sem reescrever o restante do programa.
-"""
-
-from __future__ import annotations
+"""Menus e entrada/saída de dados do programa."""
 
 import sys
 from datetime import date, datetime
@@ -28,11 +21,8 @@ from .utilidades import (
 LARGURA = 78
 
 
-# ----------------------------------------------------------------------
-# Funções de entrada de dados
-# ----------------------------------------------------------------------
+# Entrada de dados
 def ler_texto(rotulo: str, padrao: str | None = None) -> str:
-    """Lê um texto. Se ``padrao`` for informado, Enter mantém o valor atual."""
     sufixo = f" [{padrao}]" if padrao else ""
     while True:
         valor = input(f"{rotulo}{sufixo}: ").strip()
@@ -49,7 +39,6 @@ def ler_inteiro(
     maximo: int | None = None,
     padrao: int | None = None,
 ) -> int:
-    """Lê um número inteiro, repetindo a pergunta enquanto o valor for inválido."""
     sufixo = f" [{padrao}]" if padrao is not None else ""
     while True:
         valor = input(f"{rotulo}{sufixo}: ").strip()
@@ -70,7 +59,6 @@ def ler_inteiro(
 
 
 def ler_dinheiro(rotulo: str) -> int:
-    """Lê um valor em reais e devolve o total em centavos."""
     while True:
         valor = input(f"{rotulo}: ").strip()
         try:
@@ -91,7 +79,6 @@ def ler_percentual(rotulo: str, padrao: float = 0) -> float:
 
 
 def ler_data(rotulo: str, padrao: date | None = None) -> date:
-    """Aceita datas no formato dd/mm/aaaa; Enter usa a data padrão."""
     while True:
         sufixo = f" [{padrao.strftime('%d/%m/%Y')}]" if padrao else ""
         valor = input(f"{rotulo}{sufixo}: ").strip()
@@ -104,7 +91,6 @@ def ler_data(rotulo: str, padrao: date | None = None) -> date:
 
 
 def ler_opcao(validas: str) -> str:
-    """Lê uma opção de menu e valida contra a lista de opções aceitas."""
     while True:
         opcao = input("Opção: ").strip()
         if opcao in validas:
@@ -117,16 +103,13 @@ def pausar() -> None:
 
 
 def formatar_data_iso(texto: str) -> str:
-    """Converte '2026-11-18' em '18/11/2026' para exibição."""
     try:
         return datetime.strptime(str(texto), "%Y-%m-%d").strftime("%d/%m/%Y")
     except ValueError:
         return str(texto)
 
 
-# ----------------------------------------------------------------------
-# Funções de saída de dados
-# ----------------------------------------------------------------------
+# Saída de dados
 def linha(caractere: str = "-") -> str:
     return caractere * LARGURA
 
@@ -143,11 +126,7 @@ def imprimir_tabela(
     linhas: list[list[str]],
     vazia: str = "Nenhum registro encontrado.",
 ) -> None:
-    """Imprime uma tabela simples.
-
-    Cada coluna do cabeçalho é uma tupla ``(título, alinhamento)``, em que o
-    alinhamento pode ser ``"<"`` (esquerda), ``">"`` (direita) ou ``"^"``.
-    """
+    """Cada coluna é (título, alinhamento), com alinhamento <, > ou ^."""
     if not linhas:
         print(f"  {vazia}")
         return
@@ -236,9 +215,7 @@ def exibir_resumo(resumo: ResumoPedido) -> None:
     print(f"  Total....: {resumo.total_formatado}")
 
 
-# ----------------------------------------------------------------------
 # Menu de produtos
-# ----------------------------------------------------------------------
 def cadastrar_produto(servico: ServicoLoja) -> None:
     titulo("Cadastrar produto")
 
@@ -337,9 +314,7 @@ def menu_produtos(servico: ServicoLoja) -> None:
             pausar()
 
 
-# ----------------------------------------------------------------------
 # Menu de clientes
-# ----------------------------------------------------------------------
 def menu_clientes(servico: ServicoLoja) -> None:
     while True:
         titulo("Clientes")
@@ -390,9 +365,7 @@ def menu_clientes(servico: ServicoLoja) -> None:
             pausar()
 
 
-# ----------------------------------------------------------------------
 # Menu de pedidos
-# ----------------------------------------------------------------------
 def adicionar_item(servico: ServicoLoja, pedido_id: int) -> None:
     exibir_produtos(servico.listar_produtos())
     produto_id = ler_inteiro("\n  Código do produto (0 para cancelar)", minimo=0)
@@ -534,9 +507,7 @@ def menu_pedidos(servico: ServicoLoja) -> None:
             pausar()
 
 
-# ----------------------------------------------------------------------
 # Menu de relatórios
-# ----------------------------------------------------------------------
 def relatorio_estoque_baixo(servico: ServicoLoja) -> None:
     titulo("Produtos com estoque baixo")
     produtos = relatorios.produtos_com_estoque_baixo(servico)
@@ -696,11 +667,8 @@ def menu_relatorios(servico: ServicoLoja) -> None:
         pausar()
 
 
-# ----------------------------------------------------------------------
 # Programa principal
-# ----------------------------------------------------------------------
 def executar(servico: ServicoLoja) -> None:
-    """Laço principal do programa."""
     while True:
         titulo("Ateliê Encanto — Controle de Pedidos e Estoque")
         print("  1 - Produtos")
@@ -724,8 +692,7 @@ def executar(servico: ServicoLoja) -> None:
 
 
 def configurar_saida() -> None:
-    """Garante que os acentos sejam exibidos corretamente no terminal."""
     try:
-        sys.stdout.reconfigure(encoding="utf-8")  # type: ignore[attr-defined]
-    except (AttributeError, OSError):  # pragma: no cover - depende do terminal
+        sys.stdout.reconfigure(encoding="utf-8")
+    except (AttributeError, OSError):
         pass

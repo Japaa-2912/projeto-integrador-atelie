@@ -1,10 +1,4 @@
-﻿"""RepositÃ³rios: concentram todo o acesso ao banco de dados.
-
-Nenhuma outra camada escreve SQL diretamente. Isso mantÃ©m as consultas em um
-Ãºnico lugar e facilita a manutenÃ§Ã£o do sistema.
-"""
-
-from __future__ import annotations
+"""Consultas SQL de produtos, categorias, clientes e pedidos."""
 
 import sqlite3
 
@@ -25,8 +19,6 @@ ORDENACOES_PRODUTO = {
 
 
 class ProdutoRepositorio:
-    """OperaÃ§Ãµes de banco relacionadas Ã  tabela ``produtos``."""
-
     def __init__(self, conexao: sqlite3.Connection) -> None:
         self.conexao = conexao
 
@@ -107,7 +99,7 @@ class ProdutoRepositorio:
         self.conexao.execute("UPDATE produtos SET ativo = 0 WHERE id = ?", (produto_id,))
 
     def baixar_estoque(self, produto_id: int, quantidade: int) -> None:
-        """Reduz o estoque. O CHECK do banco impede valor negativo."""
+        # O CHECK da tabela impede que o estoque fique negativo.
         self.conexao.execute(
             "UPDATE produtos SET estoque = estoque - ? WHERE id = ?",
             (quantidade, produto_id),
@@ -187,8 +179,8 @@ class ClienteRepositorio:
         return [Cliente.de_linha(linha) for linha in linhas]
 
     def buscar(self, termo_normalizado: str) -> list[Cliente]:
-        # A tabela de clientes é pequena: a comparação é feita em memória para
-        # funcionar também com nomes acentuados.
+        # A tabela de clientes é pequena, então comparo em memória para
+        # conseguir ignorar os acentos também.
         linhas = self.conexao.execute(
             "SELECT id, nome, telefone, cidade FROM clientes ORDER BY nome COLLATE NOCASE"
         ).fetchall()

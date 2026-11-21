@@ -1,98 +1,75 @@
-# Sistema de Controle de Pedidos e Estoque — Ateliê Encanto
+# Sistema de Controle de Pedidos e Estoque - Ateliê Encanto
 
-Programa de linha de comando desenvolvido em **Python 3** com banco de dados
-**SQLite**, para o Projeto Integrador da disciplina *Laboratório de Programação*.
+Trabalho do Projeto Integrador da disciplina Laboratório de Programação, do
+curso de Engenharia de Software da UNISA.
 
-Autor: **Davi Koseki Truzzi** — Engenharia de Software, Universidade Santo Amaro (UNISA).
+Aluno: Davi Koseki Truzzi
 
-O sistema controla o catálogo de lembrancinhas personalizadas, o cadastro de
-clientes, a montagem de pedidos e a baixa automática de estoque, além de gerar
-relatórios gerenciais.
+O programa controla o catálogo de lembrancinhas personalizadas, os clientes, os
+pedidos e o estoque. Foi feito em Python com SQLite e não usa nenhuma
+biblioteca externa.
 
-## Requisitos
+## Como rodar
 
-- Python 3.10 ou superior (testado com Python 3.12)
-- Nenhuma biblioteca externa: o projeto usa apenas a biblioteca padrão
-
-## Como executar
+Precisa do Python 3.10 ou mais novo.
 
 ```bash
 cd programa
 py main.py
 ```
 
-Na primeira execução o arquivo `dados/atelie.db` é criado automaticamente e
-preenchido com um catálogo de exemplo. Para começar do zero, apague esse arquivo.
+Na primeira execução o programa cria o arquivo `dados/atelie.db` e coloca
+alguns produtos e clientes de exemplo. Para começar do zero, apague esse
+arquivo.
 
-Também é possível gerar um executável independente:
+## Executável
+
+O `dist/SistemaAtelie.exe` já está pronto e roda no Windows sem precisar
+instalar Python. Para gerar de novo:
 
 ```bash
 py -m pip install pyinstaller
 py -m PyInstaller --onefile --name SistemaAtelie main.py
 ```
 
-O arquivo `dist/SistemaAtelie.exe` roda em qualquer computador Windows sem
-Python instalado.
-
-## Como executar os testes automatizados
+## Testes
 
 ```bash
 cd programa
 py -m unittest discover -s tests -t . -v
 ```
 
-São 31 testes cobrindo regras de negócio, cálculos, validações, relatórios e
-algoritmos de busca e ordenação.
+São 31 testes de regras de negócio, cálculos, relatórios e algoritmos.
 
-## Funcionalidades
+## O que o programa faz
 
-| Módulo | Recursos |
-| --- | --- |
-| Produtos | cadastro, edição, busca por nome (ignora acento e maiúscula), reposição de estoque, desativação |
-| Clientes | cadastro, listagem e busca por nome |
-| Pedidos | abertura, inclusão e remoção de itens, desconto, finalização com baixa de estoque, cancelamento com devolução |
-| Relatórios | estoque baixo, produtos mais vendidos, faturamento por categoria, vendas por período, resumo geral, exportação em CSV |
+- Produtos: cadastro, edição, busca por nome (sem acento e sem diferenciar
+  maiúscula), reposição de estoque e desativação.
+- Clientes: cadastro, listagem e busca.
+- Pedidos: abrir pedido, incluir e remover itens, aplicar desconto, finalizar
+  (baixando o estoque) e cancelar (devolvendo o estoque).
+- Relatórios: estoque baixo, mais vendidos, faturamento por categoria, vendas
+  por período, resumo geral e exportação em CSV.
 
-## Estrutura do projeto
+## Organização das pastas
 
-```
-programa/
-├── main.py                 # ponto de entrada
-├── app/
-│   ├── db.py               # conexão e esquema do banco
-│   ├── modelos.py          # classes de domínio (Produto, Cliente, Pedido...)
-│   ├── repositorios.py     # consultas SQL
-│   ├── servicos.py         # regras de negócio e transações
-│   ├── relatorios.py       # relatórios e exportação CSV
-│   ├── algoritmos.py       # busca binária e ordenações
-│   ├── utilidades.py       # formatação e conversão de valores
-│   └── interface.py        # menus e entrada de dados
-├── tests/                  # testes automatizados
-├── dados/                  # banco SQLite (criado em tempo de execução)
-└── relatorios/             # arquivos CSV exportados
-```
+- `main.py`: inicia o programa.
+- `app/db.py`: conexão e tabelas do banco.
+- `app/modelos.py`: classes Produto, Cliente, ItemPedido e ResumoPedido.
+- `app/repositorios.py`: consultas SQL.
+- `app/servicos.py`: regras de negócio.
+- `app/relatorios.py`: relatórios e CSV.
+- `app/algoritmos.py`: busca binária e ordenações.
+- `app/utilidades.py`: conversão e formatação de valores.
+- `app/interface.py`: menus do terminal.
+- `tests/`: testes automatizados.
 
-## Modelo de dados
+## Banco de dados
 
-```
-categorias (1) ──< produtos (1) ──< pedido_itens >── (1) pedidos >── (1) clientes
-```
+São cinco tabelas: `categorias`, `produtos`, `clientes`, `pedidos` e
+`pedido_itens`.
 
-- `categorias`: agrupamento do catálogo.
-- `produtos`: nome, categoria, preço em centavos, estoque atual e estoque mínimo.
-- `clientes`: nome, telefone e cidade.
-- `pedidos`: cliente, status (ABERTO, FINALIZADO, CANCELADO) e desconto.
-- `pedido_itens`: produto, quantidade e preço unitário **no momento da venda**.
-
-## Decisões de projeto
-
-- **Valores em centavos**: preços são inteiros para evitar erros de
-  arredondamento de ponto flutuante.
-- **Preço congelado no item**: alterar o preço de um produto não muda pedidos
-  já registrados.
-- **Transações**: a finalização do pedido baixa o estoque e altera o status na
-  mesma transação; qualquer falha desfaz tudo.
-- **Regras no banco**: restrições `CHECK` impedem estoque negativo e desconto
-  fora de 0–100.
-- **Campo `nome_busca`**: versão do nome sem acentos e em minúsculas, indexada,
-  para busca rápida e tolerante a acentuação.
+Os preços ficam em centavos para não ter erro de arredondamento. Cada item do
+pedido guarda o preço do momento da venda, então mudar o preço de um produto
+depois não altera pedidos antigos. A finalização do pedido baixa o estoque e
+muda o status na mesma transação.

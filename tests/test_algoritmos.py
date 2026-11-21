@@ -1,7 +1,3 @@
-"""Testes dos algoritmos de busca e ordenação."""
-
-from __future__ import annotations
-
 import unittest
 
 from app.algoritmos import busca_binaria, ordenacao_por_insercao, ordenacao_por_selecao

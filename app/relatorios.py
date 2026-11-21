@@ -1,10 +1,4 @@
-"""Relatórios gerenciais e exportação de dados.
-
-As consultas deste módulo são somente leitura: elas não alteram o banco e por
-isso podem ser executadas a qualquer momento pelo usuário.
-"""
-
-from __future__ import annotations
+"""Relatórios e exportação em CSV."""
 
 import csv
 from dataclasses import dataclass
@@ -14,7 +8,6 @@ from pathlib import Path
 from .algoritmos import ordenacao_por_selecao
 from .modelos import Produto
 from .servicos import ServicoLoja
-from .utilidades import formatar_moeda
 
 
 @dataclass(frozen=True)
@@ -44,12 +37,10 @@ class ResumoGeral:
 
 
 def produtos_com_estoque_baixo(servico: ServicoLoja) -> list[Produto]:
-    """Produtos cujo estoque atual atingiu ou ficou abaixo do mínimo."""
     return servico.produtos.com_estoque_baixo()
 
 
 def produtos_mais_vendidos(servico: ServicoLoja, limite: int = 5) -> list[ProdutoVendido]:
-    """Ranking de produtos por quantidade vendida em pedidos finalizados."""
     linhas = servico.conexao.execute(
         """
         SELECT p.id AS produto_id, p.nome AS nome,
@@ -73,17 +64,12 @@ def produtos_mais_vendidos(servico: ServicoLoja, limite: int = 5) -> list[Produt
         for linha in linhas
     ]
 
-    # Ordenação decrescente por quantidade usando o algoritmo implementado.
+    # Do mais vendido para o menos vendido.
     ranking = ordenacao_por_selecao(ranking, chave=lambda item: -item.quantidade)
     return ranking[:limite]
 
 
 def faturamento_por_categoria(servico: ServicoLoja) -> list[FaturamentoCategoria]:
-    """Receita líquida e volume de itens vendidos, agrupados por categoria.
-
-    A receita já considera o desconto concedido em cada pedido, para que o
-    total do relatório coincida com o faturamento geral.
-    """
     linhas = servico.conexao.execute(
         """
         SELECT c.nome AS categoria,
@@ -113,7 +99,6 @@ def faturamento_por_categoria(servico: ServicoLoja) -> list[FaturamentoCategoria
 def vendas_por_periodo(
     servico: ServicoLoja, inicio: date, fim: date
 ) -> list[dict[str, object]]:
-    """Pedidos finalizados entre duas datas, com total calculado em centavos."""
     linhas = servico.conexao.execute(
         """
         SELECT pe.id,
@@ -148,7 +133,6 @@ def vendas_por_periodo(
 
 
 def resumo_geral(servico: ServicoLoja) -> ResumoGeral:
-    """Indicadores gerais do ateliê, usados na tela inicial dos relatórios."""
     conexao = servico.conexao
 
     produtos_ativos = conexao.execute(
@@ -162,15 +146,6 @@ def resumo_geral(servico: ServicoLoja) -> ResumoGeral:
             "SELECT status, COUNT(*) FROM pedidos GROUP BY status"
         ).fetchall()
     }
-
-    faturamento = conexao.execute(
-        """
-        SELECT COALESCE(SUM(i.quantidade * i.preco_unitario_centavos), 0)
-          FROM pedido_itens i
-          JOIN pedidos pe ON pe.id = i.pedido_id
-         WHERE pe.status = 'FINALIZADO'
-        """
-    ).fetchone()[0]
 
     descontos = conexao.execute(
         """
@@ -199,7 +174,6 @@ def resumo_geral(servico: ServicoLoja) -> ResumoGeral:
 
 
 def periodo_padrao(dias: int = 30) -> tuple[date, date]:
-    """Devolve o intervalo dos últimos ``dias`` dias até hoje."""
     hoje = date.today()
     return hoje - timedelta(days=dias - 1), hoje
 
@@ -209,7 +183,6 @@ def exportar_csv(
     cabecalho: list[str],
     linhas: list[list[object]],
 ) -> Path:
-    """Grava uma lista de linhas em arquivo CSV compatível com o Excel."""
     destino = Path(caminho)
     destino.parent.mkdir(parents=True, exist_ok=True)
 
@@ -222,10 +195,5 @@ def exportar_csv(
 
 
 def nome_arquivo_relatorio(prefixo: str) -> str:
-    """Gera um nome de arquivo com data e hora, evitando sobrescrita."""
     agora = datetime.now().strftime("%Y%m%d-%H%M%S")
     return f"{prefixo}-{agora}.csv"
-
-
-def formatar_receita(centavos: int) -> str:
-    return formatar_moeda(centavos)

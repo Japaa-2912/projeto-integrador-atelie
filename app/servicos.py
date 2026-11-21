@@ -1,11 +1,4 @@
-"""Regras de negócio do sistema.
-
-A camada de serviços é a única que decide o que pode ou não ser gravado.
-Ela valida as entradas, garante a consistência do estoque e controla as
-transações do banco de dados.
-"""
-
-from __future__ import annotations
+"""Regras de negócio e transações do sistema."""
 
 import sqlite3
 
@@ -24,7 +17,7 @@ STATUS_CANCELADO = "CANCELADO"
 
 
 class ErroDeNegocio(Exception):
-    """Erro esperado, com mensagem pronta para ser mostrada ao usuário."""
+    pass
 
 
 def _texto_obrigatorio(valor: str, campo: str, minimo: int = 3) -> str:
@@ -43,8 +36,6 @@ def _inteiro_nao_negativo(valor: int, campo: str) -> int:
 
 
 class ServicoLoja:
-    """Fachada com as operações disponíveis para a interface do programa."""
-
     def __init__(self, conexao: sqlite3.Connection) -> None:
         self.conexao = conexao
         self.produtos = ProdutoRepositorio(conexao)
@@ -52,9 +43,7 @@ class ServicoLoja:
         self.clientes = ClienteRepositorio(conexao)
         self.pedidos = PedidoRepositorio(conexao)
 
-    # ------------------------------------------------------------------
     # Categorias
-    # ------------------------------------------------------------------
     def cadastrar_categoria(self, nome: str) -> int:
         nome = _texto_obrigatorio(nome, "nome da categoria")
         existente = self.categorias.por_nome(nome)
@@ -67,9 +56,7 @@ class ServicoLoja:
     def listar_categorias(self) -> list[Categoria]:
         return self.categorias.listar()
 
-    # ------------------------------------------------------------------
     # Produtos
-    # ------------------------------------------------------------------
     def cadastrar_produto(
         self,
         nome: str,
@@ -105,7 +92,7 @@ class ServicoLoja:
         preco_centavos: int | None = None,
         estoque_minimo: int | None = None,
     ) -> None:
-        produto = self.obter_produto(produto_id)
+        self.obter_produto(produto_id)
         campos: dict[str, object] = {}
 
         if nome is not None:
@@ -130,7 +117,6 @@ class ServicoLoja:
 
         self.produtos.atualizar(produto_id, campos)
         self.conexao.commit()
-        _ = produto  # garante que o produto exista antes de atualizar
 
     def obter_produto(self, produto_id: int) -> Produto:
         produto = self.produtos.obter(produto_id)
@@ -161,9 +147,7 @@ class ServicoLoja:
         self.produtos.repor_estoque(produto_id, quantidade)
         self.conexao.commit()
 
-    # ------------------------------------------------------------------
     # Clientes
-    # ------------------------------------------------------------------
     def cadastrar_cliente(self, nome: str, telefone: str, cidade: str | None = None) -> int:
         nome = _texto_obrigatorio(nome, "nome do cliente")
         telefone = _texto_obrigatorio(telefone, "telefone", minimo=8)
@@ -184,9 +168,7 @@ class ServicoLoja:
     def buscar_clientes(self, termo: str) -> list[Cliente]:
         return self.clientes.buscar(normalizar_busca(termo))
 
-    # ------------------------------------------------------------------
     # Pedidos
-    # ------------------------------------------------------------------
     def abrir_pedido(self, cliente_id: int, desconto_percentual: float = 0) -> int:
         self.obter_cliente(cliente_id)
         if not 0 <= desconto_percentual <= 100:
@@ -285,7 +267,7 @@ class ServicoLoja:
                 )
 
         try:
-            with self.conexao:  # transação: tudo é gravado ou nada é gravado
+            with self.conexao:  # tudo é gravado ou nada é gravado
                 for item in resumo.itens:
                     self.produtos.baixar_estoque(item.produto_id, item.quantidade)
                 self.pedidos.definir_status(pedido_id, STATUS_FINALIZADO, finalizar=True)
@@ -306,7 +288,7 @@ class ServicoLoja:
         try:
             with self.conexao:
                 if pedido["status"] == STATUS_FINALIZADO:
-                    # Devolve ao estoque os itens que haviam sido baixados.
+                    # Devolve ao estoque o que tinha sido baixado.
                     for item in itens:
                         self.produtos.repor_estoque(item.produto_id, item.quantidade)
                 self.pedidos.definir_status(pedido_id, STATUS_CANCELADO)

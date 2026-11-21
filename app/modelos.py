@@ -1,6 +1,4 @@
-"""Modelos de domínio do sistema, representados por classes de dados."""
-
-from __future__ import annotations
+"""Classes que representam os dados do sistema."""
 
 import sqlite3
 from dataclasses import dataclass
@@ -93,8 +91,6 @@ class ItemPedido:
 
 @dataclass(frozen=True)
 class ResumoPedido:
-    """Resultado do cálculo de um pedido, com os valores já conferidos."""
-
     pedido_id: int
     cliente: str
     status: str

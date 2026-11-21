@@ -1,19 +1,11 @@
-"""Conexão com o banco de dados SQLite e criação do esquema.
-
-O banco é o arquivo ``dados/atelie.db``. Ele é criado automaticamente na
-primeira execução, de modo que o programa não depende de instalação de
-servidor de banco de dados.
-"""
-
-from __future__ import annotations
+"""Banco SQLite: conexão, tabelas e dados de exemplo."""
 
 import sqlite3
 from pathlib import Path
 
 CAMINHO_PADRAO = Path(__file__).resolve().parent.parent / "dados" / "atelie.db"
 
-# Valores monetários são guardados em centavos (números inteiros) para
-# evitar erros de arredondamento típicos de números de ponto flutuante.
+# Preços em centavos para evitar erro de arredondamento.
 ESQUEMA = """
 CREATE TABLE IF NOT EXISTS categorias (
     id   INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -66,11 +58,6 @@ CREATE INDEX IF NOT EXISTS idx_itens_pedido ON pedido_itens (pedido_id);
 
 
 def conectar(caminho: str | Path = CAMINHO_PADRAO) -> sqlite3.Connection:
-    """Abre (ou cria) o banco e garante que o esquema exista.
-
-    Aceita ``":memory:"`` para execução em memória, recurso usado pelos
-    testes automatizados.
-    """
     texto_caminho = str(caminho)
     if texto_caminho != ":memory:":
         arquivo = Path(texto_caminho)
@@ -84,22 +71,20 @@ def conectar(caminho: str | Path = CAMINHO_PADRAO) -> sqlite3.Connection:
 
 
 def criar_esquema(conexao: sqlite3.Connection) -> None:
-    """Executa o script de criação das tabelas e índices."""
     conexao.executescript(ESQUEMA)
     conexao.commit()
 
 
 def banco_vazio(conexao: sqlite3.Connection) -> bool:
-    """Informa se ainda não há nenhuma categoria cadastrada."""
     total = conexao.execute("SELECT COUNT(*) FROM categorias").fetchone()[0]
     return total == 0
 
 
 def semear_dados_exemplo(conexao: sqlite3.Connection) -> None:
-    """Carrega um catálogo inicial para demonstração do sistema."""
     if not banco_vazio(conexao):
         return
 
+    # Importa aqui para não dar import circular com servicos.py.
     from .servicos import ServicoLoja
 
     servico = ServicoLoja(conexao)

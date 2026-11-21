@@ -1,12 +1,3 @@
-"""Ponto de entrada do Sistema de Controle de Pedidos e Estoque.
-
-Execute com:
-
-    py main.py
-"""
-
-from __future__ import annotations
-
 from app import db
 from app.interface import configurar_saida, executar
 from app.servicos import ServicoLoja
@@ -19,12 +10,11 @@ def principal() -> int:
     try:
         if db.banco_vazio(conexao):
             db.semear_dados_exemplo(conexao)
-            print("Banco de dados criado em 'dados/atelie.db' com dados de exemplo.")
+            print("Banco criado em dados/atelie.db com dados de exemplo.")
 
-        servico = ServicoLoja(conexao)
-        executar(servico)
+        executar(ServicoLoja(conexao))
     except KeyboardInterrupt:
-        print("\nOperação interrompida pelo usuário.")
+        print("\nPrograma interrompido.")
         return 1
     finally:
         conexao.close()
